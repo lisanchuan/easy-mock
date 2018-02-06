@@ -1,52 +1,60 @@
 'use strict'
 
-const { Mock } = require('../models')
+const _ = require('lodash')
 
-module.exports = class MockProxy {
-  static newAndSave (docs) {
-    return Mock.insertMany(docs)
-  }
+const m = require('../models')
 
-  static getById (mockId) {
-    return Mock.findById(mockId).populate('project')
-  }
+const MockModel = m.Mock
 
-  static find (query, opt) {
-    return Mock.find(query, {}, opt).populate('project')
-  }
+exports.newAndSave = function (docs) {
+  console.log('docs,,,,,', docs)
+  return MockModel.insertMany(docs)
+}
 
-  static findOne (query, opt) {
-    return Mock.findOne(query, {}, opt).populate('project')
-  }
+exports.getById = function (mockId) {
+  return MockModel.findById(mockId).populate('project')
+}
 
-  static updateById (mock) {
-    return Mock.update({
-      _id: mock.id
-    }, {
-      $set: {
-        url: mock.url,
-        mode: mock.mode,
-        method: mock.method,
-        parameters: mock.parameters,
-        description: mock.description,
-        response_model: mock.response_model
-      }
-    })
-  }
+exports.find = function (query, opt) {
+  return MockModel.find(query, {}, opt).populate('project')
+}
 
-  static updateMany (docs) {
-    return Promise.all(docs.map(item => this.updateById(item)))
-  }
+exports.findOne = function (query, opt) {
+  return MockModel.findOne(query, {}, opt).populate('project')
+}
 
-  static delByIds (mockIds) {
-    return Mock.remove({
-      _id: {
-        $in: mockIds
-      }
-    })
-  }
+exports.updateById = function (mock) {
+  console.log('mockccccc', mock.tag)
+  return MockModel.update({
+    _id: mock.id
+  }, {
+    $set: {
+      tag: mock.tag,
+      url: mock.url,
+      mode: mock.mode,
+      method: mock.method,
+      parameters: mock.parameters,
+      description: mock.description,
+      response_model: mock.response_model
+    }
+  })
+}
 
-  static del (query) {
-    return Mock.remove(query)
+exports.updateMany = function (docs) {
+  if (!_.isArray(docs)) {
+    docs = [docs]
   }
+  return Promise.all(docs.map(item => exports.updateById(item)))
+}
+
+exports.delByIds = function (mockIds) {
+  return MockModel.remove({
+    _id: {
+      $in: mockIds
+    }
+  })
+}
+
+exports.del = function (query) {
+  return MockModel.remove(query)
 }

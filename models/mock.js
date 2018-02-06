@@ -12,6 +12,7 @@ const schema = new Schema({
   description: String,
   mode: String,
   url: String,
+  tag: String,
   method: String,
   parameters: String,
   response_model: String,

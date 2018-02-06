@@ -68,12 +68,26 @@
             </Col>
           </Row>
         </div>
-        <Table
+        <!-- 修改了的表格 -->
+        <Collapse v-model="openCollapse" accordion>
+          <Panel v-for="(value, index) in tags.tags" :name="index+1+''" :key="index">
+            {{value}}
+            <p slot="content">
+              <Table
+              border
+              :columns="columns"
+              :data="tags.tagsList[index]"
+              @on-selection-change="selectionChange"
+              :highlight-row="true"></Table>
+            </p>
+          </Panel>
+        </Collapse>
+         <Table v-if="tags.tags.length!==tags.tagsList.length"
           border
           :columns="columns"
-          :data="list"
+          :data="tags.tagsList[tags.tags.length]"
           @on-selection-change="selectionChange"
-          :highlight-row="true"></Table>
+          :highlight-row="true"></Table> 
       </div>
     </transition>
   </div>
@@ -81,9 +95,14 @@
 
 <style>
 @import './index.css';
+ /* 增加的样式 2018.1.26*/
+.ivu-collapse-content {
+  padding-bottom: 80px;
+}
 </style>
 
 <script>
+import config from 'config'
 import Clipboard from 'clipboard'
 import debounce from 'lodash/debounce'
 
@@ -96,6 +115,7 @@ export default {
   name: 'projectDetail',
   data () {
     return {
+      openCollapse: '1', // 2018.1.26
       pageName: this.$t('p.detail.nav[0]'),
       selection: [],
       keywords: '',
@@ -208,6 +228,50 @@ export default {
     project () {
       return this.$store.state.mock.project
     },
+    // 增加tag折板 2018.1.26
+    tags () {
+      const list = this.$store.state.mock.list
+      console.log(list)
+      let tags = []
+      let tagsList = []
+
+      for (let index in list) {
+        if (list[index].tag) {
+          if (!tags.length) { // 放入第一个tag
+            tags.push(list[index].tag)
+            tagsList.push([])
+          } else {
+            for (let i = 0; i < tags.length; i++) {
+              if (list[index].tag === tags[i]) {
+                break
+              } else {
+                if (i === tags.length - 1) {
+                  tags.push(list[index].tag)
+                  tagsList.push([])
+                }
+              }
+            }
+          }
+        } else {
+          tagsList.push([])
+        }
+      }
+      for (let index in list) {
+        if (list[index].tag) {
+          for (let i in tags) {
+            if (list[index].tag === tags[i]) {
+              tagsList[i].push(list[index])
+            }
+          }
+        } else {
+          tagsList[tags.length].push(list[index])
+        }
+      }
+      return {
+        tags: tags,
+        tagsList: tagsList
+      }
+    },
     list () {
       const list = this.$store.state.mock.list
       const reg = this.keywords && new RegExp(this.keywords, 'i')
@@ -225,7 +289,7 @@ export default {
       }
     },
     baseUrl () {
-      const baseUrl = location.origin + '/mock/' + this.project._id
+      const baseUrl = location.origin + config.mockPrefix + this.project._id
       return this.project.url === '/' ? baseUrl : baseUrl + this.project.url
     },
     group () {
@@ -297,7 +361,7 @@ export default {
         content: ids.length > 1 ? this.$t('p.detail.remove.confirm[0]') : this.$t('p.detail.remove.confirm[1]'),
         onOk: () => {
           api.mock.delete({
-            data: { project_id: this.project._id, ids }
+            data: { ids }
           }).then((res) => {
             if (res.data.success) {
               this.$Message.success(this.$t('p.detail.remove.success'))

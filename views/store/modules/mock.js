@@ -22,6 +22,7 @@ export default {
   },
   actions: {
     FETCH ({commit, state, rootState}, route) {
+      console.log('33333333')
       return api.mock.getList({
         params: {
           project_id: route.params.id,
@@ -38,9 +39,11 @@ export default {
         }
       })
     },
-    CREATE ({commit, dispatch}, {route, mode, description, url, method}) {
+    CREATE ({commit, dispatch}, {route, mode, description, url, tag, method}) {
       return api.mock.create({
+        // 前端保存使用tag 2018.1.26
         data: {
+          tag,
           mode,
           url,
           method,
